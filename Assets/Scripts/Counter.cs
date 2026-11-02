@@ -5,26 +5,35 @@ using UnityEngine;
 public class Counter : MonoBehaviour
 {
     public event Action CounterUpdated;
-        
-    public int CounterValue { get; private set; }
 
+    private readonly int _counterChange = 1;
+
+    [SerializeField] private MouseProcessor _mouseProcessor;
     private float _counterUpdateDelay = 0.5f;
-
     private Coroutine _counterCoroutine = null;
 
-    private void Update()
+    public int CounterValue { get; private set; }
+
+    private void OnEnable()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        _mouseProcessor.MouseButtonPressed += ProcessTrigger;
+    }
+
+    private void OnDisable()
+    {
+        _mouseProcessor.MouseButtonPressed -= ProcessTrigger;
+    }
+
+    private void ProcessTrigger()
+    {
+        if (_counterCoroutine == null)
         {
-            if (_counterCoroutine == null)
-            {
-                _counterCoroutine = StartCoroutine(nameof(CounterRoutine));
-            }
-            else
-            {
-                StopCoroutine(_counterCoroutine);
-                _counterCoroutine = null;
-            }
+            _counterCoroutine = StartCoroutine(nameof(CounterRoutine));
+        }
+        else
+        {
+            StopCoroutine(_counterCoroutine);
+            _counterCoroutine = null;
         }
     }
 
@@ -32,9 +41,9 @@ public class Counter : MonoBehaviour
     {
         var wait = new WaitForSeconds(_counterUpdateDelay);
 
-        while (true)
+        while (enabled)
         {
-            CounterValue += 1;
+            CounterValue += _counterChange;
             CounterUpdated?.Invoke();
             yield return wait;
         }
